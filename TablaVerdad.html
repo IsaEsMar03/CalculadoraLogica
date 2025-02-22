@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Tablas de Verdad - UNICOMFACAUCA</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .contenedor {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        .calculadora {
+            background: #1E1E1E;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            text-align: center;
+        }
+
+        .pantalla {
+            width: 100%;
+            padding: 15px;
+            font-size: 22px;
+            text-align: right;
+            background: #2A2A2A;
+            color: white;
+            border: 2px solid #424242;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            pointer-events: none;
+        }
+
+        .botonera {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 18px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #333;
+            color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            background: #555;
+        }
+
+        .especial {
+            background: #C78C06;
+            color: white;
+        }
+
+        .tabla-container {
+            flex-grow: 1;
+            background: #1E1E1E;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 600px;
+            background: #2A2A2A;
+        }
+
+        th, td {
+            border: 2px solid white;
+            padding: 12px;
+            font-size: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <div class="calculadora">
+            <h2>📊 Calculadora de Tablas de Verdad</h2>
+            <input type="text" id="expresion" class="pantalla" readonly>
+            <div class="botonera">
+                <button onclick="agregar('p')">p</button>
+                <button onclick="agregar('q')">q</button>
+                <button onclick="agregar('r')">r</button>
+                <button class="especial" onclick="agregar('¬')">¬</button>
+                <button class="especial" onclick="agregar('∧')">∧</button>
+                <button class="especial" onclick="agregar('∨')">∨</button>
+                <button class="especial" onclick="agregar('⇒')">⇒</button>
+                <button class="especial" onclick="agregar('⇔')">⇔</button>
+                <button class="especial" onclick="agregar(' (')">(</button>
+                <button class="especial" onclick="agregar(') ')">)</button>
+                <button class="especial" onclick="borrar()">⌫</button>
+                <button class="especial" onclick="vaciar()">🗑 Vaciar</button>
+                <button class="especial" style="grid-column: span 2;" onclick="generarTabla()">🖩 Generar Tabla</button>
+            </div>
+        </div>
+        <div class="tabla-container">
+            <h2>Tabla de Verdad</h2>
+            <div id="tabla"></div>
+        </div>
+    </div>
+    <script>
+        function agregar(valor) {
+            let exp = document.getElementById("expresion").value.trim();
+            let ultimo = exp.slice(-1);
+            let operadores = ["∧", "∨", "⇒", "⇔"];
+            let letras = ["p", "q", "r"];
+            
+            if (valor === "¬") {
+                if (exp === "" || ultimo === "(" || operadores.includes(ultimo)) {
+                    document.getElementById("expresion").value += valor;
+                    return;
+                } else {
+                    alert("Error: La negación solo puede ir al inicio, después de un operador o dentro de un paréntesis.");
+                    return;
+                }
+            }
+
+            if (operadores.includes(valor.trim()) && (exp === "" || operadores.includes(ultimo) || ultimo === "(")) {
+                alert("Error: Un operador lógico debe seguir una proposición.");
+                return;
+            }
+
+            if (letras.includes(valor) && (exp !== "" && letras.includes(ultimo))) {
+                alert("Error: No se pueden colocar dos proposiciones seguidas.");
+                return;
+            }
+
+            document.getElementById("expresion").value += valor;
+        }
+
+        function borrar() {
+            let exp = document.getElementById("expresion").value;
+            document.getElementById("expresion").value = exp.slice(0, -1);
+        }
+
+        function vaciar() {
+            document.getElementById("expresion").value = "";
+            document.getElementById("tabla").innerHTML = "";
+        }
+
+        function generarTabla() {
+            let expresion = document.getElementById("expresion").value.trim();
+            if (!expresion) {
+                alert("Ingrese una expresión válida.");
+                return;
+            }
+            
+            let variables = [...new Set(expresion.match(/[pqr]/g))];
+            let casos = Math.pow(2, variables.length);
+            let tablaHTML = "<table><tr>";
+            variables.forEach(v => tablaHTML += `<th>${v}</th>`);
+            tablaHTML += "<th>Resultado</th></tr>";
+            
+            for (let i = 0; i < casos; i++) {
+                let valores = {};
+                let bin = i.toString(2).padStart(variables.length, '0').split('');
+                variables.forEach((v, index) => valores[v] = bin[index] === '1');
+                
+                let expEval = expresion.replace(/p|q|r/g, match => valores[match] ? 'true' : 'false')
+                                      .replace(/¬/g, '!')
+                                      .replace(/∧/g, '&&')
+                                      .replace(/∨/g, '||')
+                                      .replace(/⇒/g, '<=')
+                                      .replace(/⇔/g, '===');
+                
+                let resultado = eval(expEval) ? "V" : "F";
+                tablaHTML += `<tr>${variables.map(v => `<td>${valores[v] ? "V" : "F"}</td>`).join('')}<td>${resultado}</td></tr>`;
+            }
+            tablaHTML += "</table>";
+            document.getElementById("tabla").innerHTML = tablaHTML;
+        }
+    </script>
+</body>
+
+</html>
